@@ -5,7 +5,13 @@ VisualStudioVersion = 15.0.28307.271
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProValAPI", "ProValAPI\ProValAPI.csproj", "{50819F31-5243-4F46-99CD-6542E8E78084}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "LogEvent", "LogEvent\LogEvent.shproj", "{7740ADC5-1432-41EA-8177-669F1952AF12}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		LogEvent\SharedProject1.projitems*{50819f31-5243-4f46-99cd-6542e8e78084}*SharedItemsImports = 4
+		LogEvent\SharedProject1.projitems*{7740adc5-1432-41ea-8177-669f1952af12}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
