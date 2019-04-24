@@ -4,17 +4,16 @@ using System.Runtime.InteropServices;
 namespace ProValAPI
 {
     /// <summary>
-    /// PVAPI64.dll (ProVal's PVAPI)
+    /// PVAPI64.dll (ProVal's API (64-bit))
     /// </summary>
 
     [ProgId("PVAPI64")]
-    //[Guid("CBEDF2F4-E4F3-4693-8637-DCE680160643")] // this is the Guid for 32-bit dll
     [Guid("368C1BB8-6689-4AAE-9FFF-AE86F4C6EFBB")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
     [ComVisible(true)]
     public class PVAPI64
     {
-        public APLW.WSEngine ws; // global workspace 
+        public static APLW.WSEngine ws; // global workspace 
 
         [ComVisible(true)]
 
@@ -26,6 +25,8 @@ namespace ProValAPI
         public string APLVer => ws.SysCall("SYSVER");
         public string CurrClient => ws.Variable["LIBDIR"];
 
+        private readonly bool debug = false;
+
         // -------- Class Constructor -------
         public PVAPI64()
         {
@@ -33,15 +34,21 @@ namespace ProValAPI
             {
                 ws = new APLW.WSEngine();
 
-                LogEvent.Log("");
-                LogEvent.Log("Created instance of APL WS Engine ...");
-                LogEvent.Log("ProVal application directory: " + SysDir);
-                LogEvent.Log("Working/User directory: " + UserDir);
-                ws.Visible = 1; // for debug only set to true
+                debug = DebugMode();
+                if ( debug ) { 
+                    LogEvent.Log("Created instance of APL WS Engine ...");
+                    LogEvent.Log("ProVal application directory: " + SysDir);
+                    LogEvent.Log("Working/User directory: " + UserDir);
+                    if (VisibleMode())
+                    {
+                        ws.Visible = 1;
+                        // make sure the development version is being used in order for it to be visible
+                    }
+                }
             }
             catch (Exception e)
             {
-                LogEvent.Log("Error: " + e.ToString());
+                LogEvent.Log("Error: " + e.ToString());             
             }
         }
 
@@ -50,17 +57,45 @@ namespace ProValAPI
         {
             try
             {
-                LogEvent.Log("Closing the WSEngine.");
+                if ( debug ) { 
+                    LogEvent.Log("Closing the WSEngine.");
+                }
                 ws.Close();
             }
             catch (Exception e)
             {
-                LogEvent.Log("Error: " + e.ToString());
+                if ( debug ) { 
+                    LogEvent.Log("Error: " + e.ToString());
+                }
             }
         }
 
         // --------- Methods ------------- //
         public int Add(int x, int y) => ws.Exec(x + " + " + y);  // test APL function that adds two integers
+
+        bool DebugMode()
+        {
+            var debug = ws.Exec("INIGET '[API] DEBUG'");
+            if (debug is int && 1==(int)debug)
+            {
+                LogEvent.Log("");
+                LogEvent.Log("Debug=1");
+                return true;
+            }
+            return false;
+            
+        }
+
+        bool VisibleMode()
+        {
+            var visible = ws.Exec("INIGET '[API] VISIBLE'");
+            if (visible is int && 1 == (int)visible)
+            {
+                LogEvent.Log("Visible=1");
+                return true;
+            }
+            return false;
+        }
 
         public dynamic PVCall(string sFuncname, dynamic xParamList = null)
         {
@@ -70,7 +105,10 @@ namespace ProValAPI
                 {
                     xParamList = "";
                 }
-                LogEvent.Log(sFuncname + " called");
+                if ( debug )
+                {
+                    LogEvent.Log(sFuncname + " called");
+                }                
 
                 var RetVal = ws.Call("API_Call", xParamList, sFuncname);
 
@@ -83,7 +121,6 @@ namespace ProValAPI
                         {
                             if (a.Rank == 2)
                             {
-                                Console.WriteLine($"res[{i}]={a}");
                                 RetVal[i] = FormatArr(a);
                             }
                         }
@@ -93,22 +130,24 @@ namespace ProValAPI
                 {
                     if (sFuncname.ToUpper() != "SHUTDOWN")
                     {
-                        LogEvent.Log("WARNING: The function " + sFuncname + " returned no value.");
+                        if ( debug ) { 
+                            LogEvent.Log("WARNING: The function " + sFuncname + " returned no value.");
+                        }
                     }
                 }
                 return RetVal;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                if (debug) { 
+                    LogEvent.Log("ERROR:  " + e.ToString());
+                }
                 throw;
             }
         }
 
         private dynamic FormatArr(dynamic p)
         {
-            Console.WriteLine("Formatting the array");
-
             if (p is int[,] intArr)
             {
                 var nRows = intArr.GetUpperBound(0) + 1;
