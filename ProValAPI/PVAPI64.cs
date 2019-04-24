@@ -13,7 +13,7 @@ namespace ProValAPI
     [ComVisible(true)]
     public class PVAPI64
     {
-        public static APLW.WSEngine ws; // global workspace 
+        private APLW.WSEngine ws; // global workspace 
 
         [ComVisible(true)]
 
@@ -32,18 +32,20 @@ namespace ProValAPI
         {
             try
             {
+                LogEvent.Log("before ws engine created");
                 ws = new APLW.WSEngine();
-
+                LogEvent.Log("after ws engine created");
                 debug = DebugMode();
                 if ( debug ) { 
                     LogEvent.Log("Created instance of APL WS Engine ...");
                     LogEvent.Log("ProVal application directory: " + SysDir);
                     LogEvent.Log("Working/User directory: " + UserDir);
-                    if (VisibleMode())
-                    {
-                        ws.Visible = 1;
-                        // make sure the development version is being used in order for it to be visible
-                    }
+                    LogEvent.Log("ProVal version: " + ProVer);
+                    //if (VisibleMode())
+                    //{
+                    //    ws.Visible = 1;
+                    //    // make sure the development version is being used in order for it to be visible
+                    //}
                 }
             }
             catch (Exception e)
@@ -57,14 +59,16 @@ namespace ProValAPI
         {
             try
             {
-                if ( debug ) { 
+                if ( debug )
+                { 
                     LogEvent.Log("Closing the WSEngine.");
                 }
                 ws.Close();
             }
             catch (Exception e)
             {
-                if ( debug ) { 
+                if ( debug )
+                { 
                     LogEvent.Log("Error: " + e.ToString());
                 }
             }
