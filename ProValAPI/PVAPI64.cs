@@ -11,11 +11,9 @@ namespace ProValAPI
     [Guid("368C1BB8-6689-4AAE-9FFF-AE86F4C6EFBB")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
     [ComVisible(true)]
-    public class PVAPI64
+    public class PVAPI64 : IDisposable
     {
         private APLW.WSEngine ws; // global workspace 
-
-        [ComVisible(true)]
 
         // ------ Class properties -------- //
         //          read-only
@@ -32,46 +30,33 @@ namespace ProValAPI
         {
             try
             {
-                LogEvent.Log("before ws engine created");
+                doingShutdown = false;
                 ws = new APLW.WSEngine();
-                LogEvent.Log("after ws engine created");
                 debug = DebugMode();
+
                 if ( debug ) { 
                     LogEvent.Log("Created instance of APL WS Engine ...");
                     LogEvent.Log("ProVal application directory: " + SysDir);
                     LogEvent.Log("Working/User directory: " + UserDir);
                     LogEvent.Log("ProVal version: " + ProVer);
-                    //if (VisibleMode())
-                    //{
-                    //    ws.Visible = 1;
-                    //    // make sure the development version is being used in order for it to be visible
-                    //}
+                    if (VisibleMode())
+                    {
+                        ws.Visible = 1;
+                        // make sure the development version is being used in order for it to be visible
+                    }
                 }
             }
             catch (Exception e)
             {
-                LogEvent.Log("Error: " + e.ToString());             
+                LogEvent.Log("Error: " + e.ToString());
+                throw;
             }
         }
 
-        // --------- Class destructor -------
+        // --------- Class finalizer -------
         ~PVAPI64()
         {
-            try
-            {
-                if ( debug )
-                { 
-                    LogEvent.Log("Closing the WSEngine.");
-                }
-                ws.Close();
-            }
-            catch (Exception e)
-            {
-                if ( debug )
-                { 
-                    LogEvent.Log("Error: " + e.ToString());
-                }
-            }
+            Dispose(false);
         }
 
         // --------- Methods ------------- //
@@ -105,6 +90,7 @@ namespace ProValAPI
         {
             try
             {
+                // we removed the initial test to see if function exists since it is checked internally
                 if (xParamList == null)
                 {
                     xParamList = "";
@@ -143,11 +129,22 @@ namespace ProValAPI
             }
             catch (Exception e)
             {
-                if (debug) { 
-                    LogEvent.Log("ERROR:  " + e.ToString());
+                if (e is COMException)
+                { 
+                    if (debug && !doingShutdown)
+                    { 
+                        LogEvent.Log("COM Exception:  " + e.ToString());
+                    }
+                    return new object[2] { 1, "COM Exception:  " + e.ToString() };
+                }else
+                {
+                    if (debug)
+                    {
+                        LogEvent.Log("Error:  " + e.ToString());
+                    }
+                    return new object[2] { 1, "Error:  " + e.ToString() };
                 }
-                throw;
-            }
+            }            
         }
 
         private dynamic FormatArr(dynamic p)
@@ -212,6 +209,66 @@ namespace ProValAPI
             }
             return p;
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+        private bool doingShutdown = false;
+
+        protected virtual void Dispose(bool disposing)
+        {            
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects).
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                try 
+                { 
+                    if (ws != null)
+                    {
+                        try
+                        {                        
+                            if (debug)
+                            {
+                                LogEvent.Log("Closing the WSEngine.");
+                            }
+                            ws.Visible = 0;
+                            doingShutdown = true;
+                            PVCall("SHUTDOWN");                             
+                        }
+                        finally
+                        {
+                            ws = null;
+                            doingShutdown = false;
+                        }
+
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (debug)
+                    {
+                        LogEvent.Log("Error: " + e.ToString());
+                    }
+                    throw;
+                }
+                // TODO: set large fields to null.
+
+                disposedValue = true;
+            }
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            GC.SuppressFinalize(this);
+        }
+        #endregion
         // ----- consider transposing higher dimension arrays as phase 2
         // ----- for phase 1, we just want to replicate what was done
     }

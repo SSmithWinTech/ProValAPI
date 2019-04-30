@@ -47,6 +47,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ProValAPI.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
     <COMReference Include="APLW">
       <Guid>{F9118446-8F3C-4CC0-9AAD-1317F3933F9B}</Guid>
       <VersionMajor>3</VersionMajor>
@@ -56,9 +62,6 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ProValAPI.snk" />
   </ItemGroup>
   <Import Project="..\LogEvent\SharedProject1.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
